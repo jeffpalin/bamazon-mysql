@@ -8,13 +8,13 @@ CREATE TABLE products (
   id INT NOT NULL AUTO_INCREMENT,
   product_name VARCHAR(255) NULL,
   department_name VARCHAR(255) NULL,
-  price INTEGER(10) NULL,
+  price DECIMAL(9,2) NULL,
   stock_quantity INTEGER(10) NULL,
   PRIMARY KEY (id)
 );
 
 INSERT INTO products (product_name, department_name, price, stock_quantity)
-VALUES ("IPhone X", "Electronics", "999", "25");
+VALUES ("iPhone X", "electronics", "999", "25");
 
 INSERT INTO products (product_name, department_name, price, stock_quantity)
 VALUES ("TV", "electronics", "650", "50");
@@ -39,6 +39,9 @@ VALUES ("coffee maker", "home goods", "75", "30");
 
 INSERT INTO products (product_name, department_name, price, stock_quantity)
 VALUES ("tire", "automotive", "130", "40");
+
+INSERT INTO products (product_name, department_name, price, stock_quantity)
+VALUES ("gnome", "garden", "50", "75");
 
 
 SELECT*FROM products;
