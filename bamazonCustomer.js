@@ -1,5 +1,5 @@
 var mysql = require("mysql");
-var inquire = require("inquirer");
+var inquirer = require("inquirer");
 require('console.table');
 
 // create the connection information for the sql database
@@ -19,10 +19,6 @@ connection.connect(function(err) {
     if (err) throw err;
     console.log("connected as id " + connection.threadId);
     loadProducts();
-    // run the start function after the product table to prompt the user
-    // start();
-    //end the connection and go back to the terminal
-    connection.end();
 });
 // Function to load the products table from the database and print results to the console
 function loadProducts() {
@@ -32,17 +28,30 @@ function loadProducts() {
 
         // Draw the table in the terminal using the response
         console.table(res);
+        // Run first question with inquirer
+        start();
     });
 }
 
+// function which prompts the user for what action they should take
+function start() {
+    inquirer
+        .prompt({
+            type: "input",
+            name: "purchaseItem",
+            message: "What is the ID of the item you would like to purchase? (Quit with Q)",
+        })
+        .then(function(answer) {
+            // based on their answer, either call the bid or the post functions
+            if (answer.purchaseItem === "q" || answer.purchaseItem === "Q") {
+                connection.end();
+            } else {
+                // query the database for all items being auctioned
+                connection.query("SELECT * FROM products LIMIT " + (answer.purchaseItem - 1) + ",1", function(err, results) {
+                    if (err) throw err;
+                    console.log(results);
 
-
-// function queryAll() {
-//     connection.query("SELECT * FROM products", function(err, res) {
-//         for (var i = 0; i < res.length; i++) {
-//             console.log(res[i].id + " | " + res[i].product_name + " | " + res[i].department_name +
-//                 " | $" + res[i].price + " | " + res[i].stock_quantity)
-//         }
-//         console.log("-----------------------------------");
-//     });
-// }
+                });
+            }
+        });
+}
