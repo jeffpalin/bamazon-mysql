@@ -28,7 +28,7 @@ function loadProducts() {
 
         // Draw the table in the terminal using the response
         console.table(res);
-        // Run first question with inquirer
+        // Run questions with inquirer
         start();
     });
 }
@@ -41,16 +41,41 @@ function start() {
             name: "purchaseItem",
             message: "What is the ID of the item you would like to purchase? (Quit with Q)",
         })
-        .then(function(answer) {
-            // based on their answer, either call the bid or the post functions
-            if (answer.purchaseItem === "q" || answer.purchaseItem === "Q") {
+        .then(function(itemAnswer) {
+            // based on their answer, either quit program or pass selection to "else" below
+            if (itemAnswer.purchaseItem === "q" || itemAnswer.purchaseItem === "Q") {
                 connection.end();
             } else {
-                // query the database for all items being auctioned
-                connection.query("SELECT * FROM products LIMIT " + (answer.purchaseItem - 1) + ",1", function(err, results) {
+                // query the database for the corresponding item based on ID (note that LIMIT in SQL starts at 0 not 1)
+                idNumber = (itemAnswer.purchaseItem - 1)
+                connection.query("SELECT * FROM products LIMIT " + (idNumber) + ",1", function(err, results) {
                     if (err) throw err;
-                    console.log(results);
-
+                    console.table(results);
+                    quantity();
+                    // Ask how many of the single line table created user wants to purchase
+                    function quantity() {
+                        inquirer
+                            .prompt({
+                                type: "input",
+                                name: "purchaseQuantity",
+                                message: "How many would you like to purchase? (Quit with Q)",
+                            })
+                            .then(function(quantityAnswer) {
+                                // check to make sure there is enough stock to complete order
+                                if ((quantityAnswer.purchaseQuantity) === "q" || (quantityAnswer.purchaseQuantity === "Q")) {
+                                    connection.end();
+                                    // } else if (!Number.isInteger(quantityAnswer.purchaseQuantity)) {
+                                    //     console.log("---NOT AN INTEGER!-----");
+                                    //     quantity();
+                                } else if ((quantityAnswer.purchaseQuantity) > (results[0].stock_quantity)) {
+                                    console.log("\n-----NOT ENOUGH STOCK TO COMPLETE ORDER!!-----\n");
+                                    quantity();
+                                } else {
+                                    console.log(results[0].stock_quantity);
+                                    console.log(quantityAnswer.purchaseQuantity);
+                                }
+                            });
+                    }
                 });
             }
         });
