@@ -14,18 +14,19 @@ var connection = mysql.createConnection({
     password: "R2Qeph2thavU",
     database: "bamazonDB"
 });
+
 // connect to the mysql server and sql database
 connection.connect(function(err) {
     if (err) throw err;
     console.log("connected as id " + connection.threadId);
     loadProducts();
 });
+
 // Function to load the products table from the database and print results to the console
 function loadProducts() {
     // Selects all of the data from the MySQL products table
     connection.query("SELECT * FROM products", function(err, res) {
         if (err) throw err;
-
         // Draw the table in the terminal using the response
         console.table(res);
         // Run questions with inquirer
@@ -52,6 +53,7 @@ function start() {
                     if (err) throw err;
                     console.table(results);
                     quantity();
+
                     // Ask how many of the single line table created user wants to purchase
                     function quantity() {
                         inquirer
@@ -60,23 +62,63 @@ function start() {
                                 name: "purchaseQuantity",
                                 message: "How many would you like to purchase? (Quit with Q)",
                             })
-                            .then(function(quantityAnswer) {
-                                // check to make sure there is enough stock to complete order
-                                if ((quantityAnswer.purchaseQuantity) === "q" || (quantityAnswer.purchaseQuantity === "Q")) {
-                                    connection.end();
-                                    // } else if (!Number.isInteger(quantityAnswer.purchaseQuantity)) {
-                                    //     console.log("---NOT AN INTEGER!-----");
-                                    //     quantity();
-                                } else if ((quantityAnswer.purchaseQuantity) > (results[0].stock_quantity)) {
-                                    console.log("\n-----NOT ENOUGH STOCK TO COMPLETE ORDER!!-----\n");
-                                    quantity();
-                                } else {
-                                    console.log(results[0].stock_quantity);
-                                    console.log(quantityAnswer.purchaseQuantity);
-                                }
-                            });
+
+                        .then(function(quantityAnswer) {
+                            // check to make sure there is enough stock to complete order
+                            if ((quantityAnswer.purchaseQuantity) === "q" || (quantityAnswer.purchaseQuantity === "Q")) {
+                                connection.end();
+                            } else if ((quantityAnswer.purchaseQuantity) > (results[0].stock_quantity)) {
+                                console.log("\n-----NOT ENOUGH STOCK TO COMPLETE ORDER (ONLY " + (results[0].stock_quantity) + " AVAILABLE) !!-----\n");
+                                quantity();
+                            } else {
+                                // Update the bamazonDB.sql database with the new stock_quantity value
+                                var newQuantity = (results[0].stock_quantity) - (quantityAnswer.purchaseQuantity);
+                                var totalPrice = (quantityAnswer.purchaseQuantity) * (results[0].price);
+                                connection.query(
+                                    "UPDATE products SET ? WHERE ?", [{
+                                            stock_quantity: newQuantity
+                                        },
+                                        {
+                                            id: itemAnswer.purchaseItem
+                                        }
+                                    ],
+                                    function(err) {
+                                        if (err) throw err;
+                                        // Give a summary of the purchase
+                                        purchaseSummary();
+                                        // Prompt the user if they want to purchase more items
+                                        inquirer
+                                            .prompt({
+                                                type: "confirm",
+                                                message: "Do you want to make another purchase?",
+                                                name: "confirm",
+                                                default: true
+                                            })
+                                            .then(function(purchaseResponse) {
+                                                // Reload table for another selection if confirmed for another purchase
+                                                if (purchaseResponse.confirm) {
+                                                    loadProducts();
+                                                } else {
+                                                    console.log("\nThanks for coming out!");
+                                                    connection.end();
+                                                }
+                                            });
+                                    }
+                                );
+                                // purchaseSummary function used after purchase and prior to confirm prompt for
+                                // another purchase
+                                function purchaseSummary() {
+                                    console.log("-----------------------------------------------------");
+                                    console.log("YOUR PURCHASE WAS COMPLETED SUCCESSFULLY!\n");
+                                    console.log("You ordered: " + quantityAnswer.purchaseQuantity + " of the " + results[0].product_name);
+                                    console.log("There are " + newQuantity + " left in stock.");
+                                    console.log("TOTAL COST: $" + totalPrice);
+                                    console.log("-----------------------------------------------------");
+                                };
+                            };
+                        });
                     }
                 });
-            }
+            };
         });
-}
+};
