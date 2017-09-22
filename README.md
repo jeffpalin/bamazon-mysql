@@ -9,7 +9,8 @@ This node application allows the user to view an online marketplace and order it
 
 2.) Once the application is running the user will see a table with items to purchase:
 
-![Alt text](/images/capture1.png?raw=true "Initial Table Screenshot")
+![Image 1](/images/capture1.png)
+
 
 
 
