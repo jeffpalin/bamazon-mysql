@@ -9,7 +9,7 @@ This node application allows the user to view an online marketplace and order it
 
 2.) Once the application is running the user will see a table with items to purchase:
 
-![Image 1](/images/capture1.png)
+![Image 1](/images/capture1.PNG)
 
 
 
